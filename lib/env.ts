@@ -27,6 +27,8 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: optionalString(),
   STRIPE_WEBHOOK_SECRET: optionalString(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: optionalString(),
+  YOOKASSA_SHOP_ID: optionalString(),
+  YOOKASSA_SECRET_KEY: optionalString(),
   THREEXUI_BASE_URL: optionalUrl(),
   THREEXUI_USERNAME: optionalString(),
   THREEXUI_PASSWORD: optionalString(),

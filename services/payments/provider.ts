@@ -1,6 +1,7 @@
 import { env } from "@/lib/env";
 import { MockPaymentProvider } from "@/services/payments/mock";
 import { StripePaymentProvider } from "@/services/payments/stripe";
+import { YooKassaPaymentProvider } from "@/services/payments/yookassa";
 import type { PaymentProvider } from "@/services/payments/types";
 import type { PaymentProvider as PrismaPaymentProvider } from "@prisma/client";
 
@@ -27,6 +28,8 @@ export function getPaymentProvider(): PaymentProvider {
       return new StripePaymentProvider();
     case "mock":
       return new MockPaymentProvider();
+    case "yookassa":
+      return new YooKassaPaymentProvider();
     default:
       throw new Error(
         `Провайдер ${env.PAYMENT_PROVIDER} пока не реализован. Добавьте адаптер в services/payments/provider.ts`,
