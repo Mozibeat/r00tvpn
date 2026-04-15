@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+  TELEGRAM
+  YOOKASSA
+  CRYPTOBOT
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAST_DUE
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  passwordHash  String?
+  role          Role           @default(USER)
+  emailVerified DateTime?
+  image         String?
+  orders        Order[]
+  payments      Payment[]
+  subscriptions Subscription[]
+  vpnAccesses   VpnAccess[]
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  name          String
+  description   String
+  durationDays  Int
+  amount        Int
+  currency      String         @default("RUB")
+  isActive      Boolean        @default(true)
+  isPopular     Boolean        @default(false)
+  features      String[]
+  orders        Order[]
+  subscriptions Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  userId                String
+  planId                String
+  amount                Int
+  currency              String      @default("RUB")
+  status                OrderStatus @default(PENDING)
+  stripeCheckoutSession String?     @unique
+  metadata              Json?
+  paidAt                DateTime?
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                  Plan        @relation(fields: [planId], references: [id])
+  payment               Payment?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([userId, status])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  userId            String
+  orderId           String        @unique
+  provider          PaymentProvider
+  providerPaymentId String?       @unique
+  amount            Int
+  currency          String        @default("RUB")
+  status            PaymentStatus @default(PENDING)
+  webhookEventId    String?
+  rawPayload        Json?
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId, status])
+}
+
+model Subscription {
+  id          String             @id @default(cuid())
+  userId      String
+  planId      String
+  status      SubscriptionStatus @default(ACTIVE)
+  startedAt   DateTime
+  expiresAt   DateTime
+  cancelledAt DateTime?
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan        Plan               @relation(fields: [planId], references: [id])
+  vpnAccess   VpnAccess?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([userId, status, expiresAt])
+}
+
+model VpnAccess {
+  id              String       @id @default(cuid())
+  userId          String
+  subscriptionId  String       @unique
+  externalId      String?
+  email           String
+  uuid            String
+  inboundId       String
+  vpnKey          String
+  accessUrl       String?
+  subscriptionUrl String?
+  clientConfig    String?
+  lastSyncedAt    DateTime?
+  isActive        Boolean      @default(true)
+  disabledAt      DateTime?
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([userId, isActive])
+  @@unique([inboundId, email])
+}
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  provider    String
+  eventId     String   @unique
+  eventType   String
+  isProcessed Boolean  @default(false)
+  payload     Json?
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
+}
