@@ -136,7 +136,7 @@ export async function provisionVpnAccessForPaidOrder(orderId: string) {
     create: {
       orderId: order.id,
       userId: order.userId,
-      provider: "STRIPE",
+      provider: order.payment?.provider ?? "STRIPE",
       amount: order.amount,
       currency: order.currency,
       status: "SUCCEEDED",

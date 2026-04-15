@@ -5,7 +5,10 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { checkoutSchema } from "@/lib/validators/checkout";
-import { getPaymentProvider } from "@/services/payments/provider";
+import {
+  getPaymentProvider,
+  getPrismaPaymentProvider,
+} from "@/services/payments/provider";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -46,6 +49,7 @@ export async function POST(req: Request) {
   });
 
   const provider = getPaymentProvider();
+  const paymentProvider = getPrismaPaymentProvider();
   let checkout;
   try {
     checkout = await provider.createCheckoutSession({
@@ -68,7 +72,7 @@ export async function POST(req: Request) {
       create: {
         userId: session.user.id,
         orderId: order.id,
-        provider: "STRIPE",
+        provider: paymentProvider,
         amount: plan.amount,
         currency: plan.currency,
         status: "FAILED",
@@ -95,7 +99,7 @@ export async function POST(req: Request) {
     data: {
       userId: session.user.id,
       orderId: order.id,
-      provider: "STRIPE",
+      provider: paymentProvider,
       amount: plan.amount,
       currency: plan.currency,
       status: "PENDING",
