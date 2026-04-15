@@ -28,6 +28,12 @@ export function CheckoutButton({ planId, children, className }: Props) {
         checkoutUrl?: string;
         message?: string;
       };
+      if (response.status === 401) {
+        const callback = encodeURIComponent(window.location.pathname);
+        window.location.href = `/login?callbackUrl=${callback}`;
+        return;
+      }
+
       if (!response.ok || !payload.checkoutUrl) {
         throw new Error(payload.message ?? "Не удалось создать платеж");
       }
