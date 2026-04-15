@@ -32,17 +32,28 @@ async function main() {
     });
   }
 
-  const adminEmail = "admin@rootvpn.local";
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {},
-    create: {
-      email: adminEmail,
-      name: "RootVPN Admin",
-      role: Role.ADMIN,
-      passwordHash: await hash("Admin12345!", 10),
-    },
-  });
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (adminEmail && adminPassword) {
+    await prisma.user.upsert({
+      where: { email: adminEmail.toLowerCase() },
+      update: {
+        role: Role.ADMIN,
+        passwordHash: await hash(adminPassword, 10),
+      },
+      create: {
+        email: adminEmail.toLowerCase(),
+        name: "RootVPN Admin",
+        role: Role.ADMIN,
+        passwordHash: await hash(adminPassword, 10),
+      },
+    });
+  } else {
+    console.warn(
+      "ADMIN_EMAIL/ADMIN_PASSWORD не заданы: seed не создает дефолтного админа.",
+    );
+  }
 }
 
 main()

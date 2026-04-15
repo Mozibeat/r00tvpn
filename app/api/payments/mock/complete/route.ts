@@ -2,10 +2,15 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth";
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { provisionVpnAccessForPaidOrder } from "@/services/subscription";
 
 export async function GET(req: Request) {
+  if (env.PAYMENT_PROVIDER !== "mock") {
+    return NextResponse.json({ message: "Mock checkout отключен" }, { status: 404 });
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.redirect(new URL("/login", req.url));

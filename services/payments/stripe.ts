@@ -7,6 +7,12 @@ export function getStripeClient() {
   if (!env.STRIPE_SECRET_KEY) {
     throw new Error("STRIPE_SECRET_KEY не задан");
   }
+  if (
+    env.STRIPE_SECRET_KEY.includes("REPLACE_") ||
+    !env.STRIPE_SECRET_KEY.startsWith("sk_")
+  ) {
+    throw new Error("STRIPE_SECRET_KEY имеет невалидный формат");
+  }
   return new Stripe(env.STRIPE_SECRET_KEY, {
     apiVersion: "2026-03-25.dahlia",
   });
